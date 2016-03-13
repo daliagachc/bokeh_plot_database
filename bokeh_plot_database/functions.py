@@ -1,7 +1,7 @@
 # project name: pyranometer
 # created by diego aliaga daliaga_at_chacaltaya.edu.bo
-import Database
-import UserPlot
+import bokeh_plot_database.Database as Database
+import bokeh_plot_database.UserPlot as UserPlot
 
 def get_databases(parameters, global_pars):
     databases = dict()

@@ -7,9 +7,9 @@ from bokeh.models import Plot, Range1d, DatetimeAxis, \
     ResizeTool, Legend
 
 import numpy as np
-from UserYColumn import UserYColumn
+from bokeh_plot_database.UserYColumn import UserYColumn
 import my_logger
-from Database import Database
+from bokeh_plot_database.Database import Database
 
 logger = my_logger.get_logger(name=__name__, level='DEBUG')
 
@@ -20,7 +20,7 @@ class UserPlot(object):
     Attributes:
         name: None
         user_dic_pars: None
-        database: None
+        databases: None
         plot: None
         y_columns: {}
         x_axis: None
@@ -110,7 +110,7 @@ class UserPlot(object):
                 x_range_name='x_range' + self.name
         )
 
-        self.column_data_sources = dict();
+        self.column_data_sources = dict()
         for key in self.databases_ref:
             self.column_data_sources[key] = self.databases[key].column_data_source
 
