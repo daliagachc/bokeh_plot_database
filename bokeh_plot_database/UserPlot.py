@@ -3,7 +3,7 @@
 import datetime
 from bokeh.models import Plot, Range1d, DatetimeAxis, \
     PanTool, WheelZoomTool, \
-    CrosshairTool, PreviewSaveTool,\
+    CrosshairTool, PreviewSaveTool, \
     ResizeTool, Legend
 
 import numpy as np
@@ -185,6 +185,10 @@ class UserPlot(object):
     def set_start_end_datetime(self):
         self.end_datetime_utc = datetime.datetime.utcnow()
         self.start_datetime_utc = self.end_datetime_utc - datetime.timedelta(hours=self.first_interval_hours)
+        self.set_local_from_utc()
+
+
+    def set_local_from_utc(self):
         if self.utc_offset_enabled:
             self.start_datetime_local = self.start_datetime_utc + datetime.timedelta(hours=self.utc_offset_hours)
             self.end_datetime_local = self.end_datetime_utc + datetime.timedelta(hours=self.utc_offset_hours)
