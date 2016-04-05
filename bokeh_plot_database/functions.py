@@ -1,5 +1,7 @@
 # project name: pyranometer
 # created by diego aliaga daliaga_at_chacaltaya.edu.bo
+from bokeh.colors import Color
+
 import bokeh_plot_database.Database as Database
 import bokeh_plot_database.UserPlot as UserPlot
 
@@ -24,4 +26,14 @@ def get_plots(parameters):
                 parameters_dic=parameters,
                 shared_ranges=shared_ranges
         )
+        # for plot_name in parameters['ceil_plots'].keys():
+        #     plot_dic = parameters['ceil_plots'][plot_name]
+        # plots[plot_name] = UserPlot.UserPlotCeil(
+        #         name=plot_name,
+        #         dic=plot_dic,
+        #         parameters_dic=parameters,
+        #         shared_ranges=shared_ranges
+        # )
     return plots
+
+Color

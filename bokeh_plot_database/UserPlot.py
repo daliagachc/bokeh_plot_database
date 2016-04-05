@@ -1,12 +1,16 @@
 # project name: pyranometer
 # created by diego aliaga daliaga_at_chacaltaya.edu.bo
 import datetime
+from time import timezone
+
 from bokeh.models import Plot, Range1d, DatetimeAxis, \
     PanTool, WheelZoomTool, \
     CrosshairTool, PreviewSaveTool, \
-    ResizeTool, Legend
+    ResizeTool, Legend, Line, Image, ColumnDataSource, LinearColorMapper, LinearAxis, DataRange1d
 
 import numpy as np
+from bokeh.plotting import Figure
+
 from bokeh_plot_database.UserYColumn import UserYColumn
 import my_logger
 from bokeh_plot_database.Database import Database
@@ -39,7 +43,9 @@ class UserPlot(object):
         #     UserPlot.set_shared_x_ranges(
         #             parameters=parameters_dic
         #     )
-
+        # self.all_y_columns = False
+        self.legended = True
+        self.plot_type = 'normal'
         self.utc_offset_hours = -4
         self.utc_offset_enabled = True
         self.max_points_plots = 500
@@ -54,6 +60,7 @@ class UserPlot(object):
         self.height = 400
         self.webgl = False
         self.title = ''
+        self.manual_last_time = False
         self.default_intervals = np.array(
                 [1, 60, 3600, 24 * 3600, 24 * 3600 * 7,
                  24 * 3600 * 30, 24 * 3600 * 364]
@@ -86,17 +93,6 @@ class UserPlot(object):
                     user_plot=self
             )
 
-        self.plot = Plot(x_range=Range1d(),
-                         y_range=Range1d(),
-                         # x_axis_type="datetime",
-
-                         min_border_left=self.min_border_left
-
-                         )
-        self.plot.responsive = False
-
-        self.plot.webgl = self.webgl
-
         if self.name in self.shared_ranges.shared_x_ranges:
             self.x_range = self.shared_ranges.shared_x_ranges[self.name]
         else:
@@ -107,37 +103,54 @@ class UserPlot(object):
 
         self.x_axis = DatetimeAxis(
                 name='x_axis' + self.name,
-                x_range_name='x_range' + self.name
+                # x_range_name='x_range' + self.name
         )
 
         self.column_data_sources = dict()
         for key in self.databases_ref:
             self.column_data_sources[key] = self.databases[key].column_data_source
 
-        self.plot.plot_width = self.width
-        self.plot.plot_height = self.height
+        self.plot = Plot(x_range=self.x_range,
+                         y_range=Range1d(),
+                         # x_axis_type="datetime",
 
+                         min_border_left=self.min_border_left,
+                         toolbar_location="right"
+
+                         )
         self.plot.add_tools(PanTool(),
                             WheelZoomTool(),
                             ResizeTool(),
                             CrosshairTool(),
-                            PreviewSaveTool(),
+                            # PreviewSaveTool(),
                             # HoverTool()
                             )
-
-        self.plot.extra_x_ranges['x_range' + self.name] = self.x_range
-
         self.plot.add_layout(self.x_axis, 'below')
+
+        self.plot.responsive = False
+
+        self.plot.webgl = self.webgl
+
+        self.plot.plot_width = self.width
+        self.plot.plot_height = self.height
+
+        # self.plot.extra_x_ranges['x_range' + self.name] = self.x_range
 
         self.plot.title = self.title
 
         # logger.debug('plot id is %s', self.plot._id)
         # logger.debug('y_column keys are %s', self.database.y_columns.keys())
+        if self.plot_type is 'normal':
+            self.setup_normal_plot()
+        if self.plot_type is 'ceil':
+            self.setup_ceil_plot()
+
+    def setup_normal_plot(self):
         for database_key in self.databases_ref:
             database = self.databases[database_key]
             for col_name in database.y_columns.keys():
-                logger.debug('start y_colun loop %s', )
-                col_dict = database.dic['y_columns'][col_name]
+                # logger.debug('start y_colun loop %s', )
+                col_dict = database.y_columns[col_name]
                 self.y_columns[col_name] = UserYColumn(
                         name=col_name,
                         dic=col_dict,
@@ -150,25 +163,52 @@ class UserPlot(object):
                 )
                 top = (
                     '{name} [{units}]'.format(
-                            name=col_dict['show_name'],
-                            units=self.y_columns[col_name].units),
+                            name=self.y_columns[col_name].show_name,
+                            units=self.y_columns[col_name].units
+                    )
+                    ,
                     [self.y_columns[col_name].glyph_renderer, self.y_columns[col_name].glyph_renderer_circle]
                 )
                 self.legends.append(top)
 
-        self.plot.add_layout(
-                Legend(
-                        legends=self.legends,
-                        location='top_left',
-                        # glyph_height=50,
-                        # label_text_color=self.legend_text_colors
-                )
+        if self.legended:
+            logger.debug('appending legend %s', self.name)
+            self.plot.add_layout(
+                    Legend(
+                            legends=self.legends,
+                            location='top_left',
+                            # glyph_height=50,
+                            # label_text_color=self.legend_text_colors
+                            background_fill_alpha=0.8
+                    )
+            )
+
+            # self.plot.add_layout(Legend(legends=[('a', [self.glyph_renderer])]))
+
+    def setup_ceil_plot(self):
+
+        self.plot.y_range.end = 250*15
+        self.plot.y_range.start = 0
+        self.plot.add_layout(LinearAxis(),'left')
+        im = Image(
+                x='x',
+                y='y',
+                image='image',
+                dw='dw',
+                dh='dh',
+                color_mapper=LinearColorMapper(palette='Spectral11'),
+                dilate=True
         )
+        self.plot.add_glyph(self.column_data_sources[self.databases_ref[0]],im)
+
+
+
 
         # self.plot.add_layout(Legend(legends=[('a', [self.glyph_renderer])]))
 
     def update_y_ranges(self):
         for y_col in self.y_columns.itervalues():
+            # logger.debug('updating %s', y_col)
             y_col.update_y_range()
 
     def set_data_average_secs(self):
@@ -183,10 +223,12 @@ class UserPlot(object):
         self.data_average_secs = np.array([self.data_average_secs, 1]).max()
 
     def set_start_end_datetime(self):
-        self.end_datetime_utc = datetime.datetime.utcnow()
+        if self.manual_last_time is False:
+            self.end_datetime_utc = datetime.datetime.utcnow()
+        else:
+            self.end_datetime_utc = datetime.datetime(*self.manual_last_time)
         self.start_datetime_utc = self.end_datetime_utc - datetime.timedelta(hours=self.first_interval_hours)
         self.set_local_from_utc()
-
 
     def set_local_from_utc(self):
         if self.utc_offset_enabled:
@@ -197,12 +239,24 @@ class UserPlot(object):
             self.end_datetime_local = self.end_datetime_utc
 
     def update(self):
+        x_range_type = type(self.x_range.end)
+        if x_range_type is datetime.datetime:
+            x_start = self.x_range.start.replace(tzinfo=timezone.utc).timestamp() * 1000
+            x_end = self.x_range.end.replace(tzinfo=timezone.utc).timestamp() * 1000
+
+        else:
+            x_end = self.x_range.end
+            x_start = self.x_range.start
+        # logger.debug('xrange type is %s for %s',
+        #              type(self.x_range.end),
+        #              self.name
+        #              )
         end_datetime_candidate_local = (
             datetime.datetime.utcfromtimestamp(
-                    self.x_range.end / 1000))
+                    x_end / 1000))
         start_datetime_candidate_local = (
             datetime.datetime.utcfromtimestamp(
-                    self.x_range.start / 1000))
+                    x_start / 1000))
 
         if (
                     (
@@ -253,6 +307,8 @@ class UserPlot(object):
             #         cls.x_ranges_set = True
 
 
+
+
 class SharedRanges(object):
     def __init__(self, parameters):
         self.shared_x_ranges = {}
@@ -261,6 +317,7 @@ class SharedRanges(object):
                 x_range = Range1d()
                 for p_name in tups:
                     self.shared_x_ranges[p_name] = x_range
+        logger.debug('connected ranges are %s', self.shared_x_ranges)
         self.x_ranges_set = True
 
 
