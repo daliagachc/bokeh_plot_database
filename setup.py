@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='bokeh_plot_database',
-    version='2016-03-12_21-35-43_',
+    version='2016-04-05_10-51-02_',
     packages=['bokeh_plot_database'],
     url='',
     license='',
