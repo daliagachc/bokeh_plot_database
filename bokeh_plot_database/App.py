@@ -30,7 +30,7 @@ class App(object):
             for user_plot in user_plots.itervalues():
                 user_plot.update()
 
-        curdoc().add_periodic_callback(update, 1000)
+        curdoc().add_periodic_callback(update, 2000)
 
         curdoc().add_root(
                 vplot(
