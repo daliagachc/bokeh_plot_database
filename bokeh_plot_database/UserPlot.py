@@ -246,9 +246,16 @@ class UserPlot(object):
             logger.debug('timezone is %s', timezone)
             # x_start = self.x_range.start.replace(tzinfo=timezone.utc).timestamp() * 1000
             # x_end = self.x_range.end.replace(tzinfo=timezone.utc).timestamp() * 1000
-            x_start = (self.x_range.start.timestamp()) * 1000
-            x_end = (self.x_range.end.timestamp()) * 1000
-
+            x_start = (
+                          (
+                              self.x_range.start-datetime.datetime(1970,1,1)
+                          ).total_seconds()
+                      ) * 1000
+            x_end = (
+                          (
+                              self.x_range.end-datetime.datetime(1970,1,1)
+                          ).total_seconds()
+                      ) * 1000
         else:
             x_end = self.x_range.end
             x_start = self.x_range.start
