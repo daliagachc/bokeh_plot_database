@@ -247,16 +247,6 @@ class Database(object):
             dw.append(time_int * 1000)
             dh.append(250 * 15)
 
-        cs = ColumnDataSource(
-            data={
-                'x': tt,
-                'y': y,
-                'dh': dh,
-                'dw': dw,
-                'image': dd
-            }
-        )
-
         ddata={
             'x': tt,
             'y': y,
