@@ -64,10 +64,10 @@ class Database(object):
 
         self.url = 'mysql://{user}:{psw}@{ip}/{db}'
         self.url = self.url.format(
-                user=self.user,
-                psw=self.psw,
-                ip=self.ip,
-                db=self.database_name
+            user=self.user,
+            psw=self.psw,
+            ip=self.ip,
+            db=self.database_name
         )
 
         self.eng = sa.create_engine(self.url)
@@ -133,7 +133,7 @@ class Database(object):
             utc_offset_seconds
         )
         query = sql.func.from_unixtime(
-                sql.func.avg(query)
+            sql.func.avg(query)
         )
         query = query.label(self.time_column.key)
 
@@ -150,8 +150,8 @@ class Database(object):
             raise
 
         query = sql.func.from_unixtime(
-                sql.func.round(query / data_average_secs) *
-                data_average_secs
+            sql.func.round(query / data_average_secs) *
+            data_average_secs
         )
 
         return query
@@ -173,17 +173,17 @@ class Database(object):
         query = query.group_by(group_round_datetime_query)
         if self.time_int_or_datetime is 'datetime':
             query = query.filter(
-                    self.user_plot.start_datetime_utc < self.time_column,
-                    self.time_column < self.user_plot.end_datetime_utc
+                self.user_plot.start_datetime_utc < self.time_column,
+                self.time_column < self.user_plot.end_datetime_utc
             )
 
         elif self.time_int_or_datetime is 'int':
             query = query.filter(
-                    sql.func.unix_timestamp(self.user_plot.start_datetime_utc) <
-                    self.time_column
-                    ,
-                    self.time_column <
-                    sql.func.unix_timestamp(self.user_plot.end_datetime_utc)
+                sql.func.unix_timestamp(self.user_plot.start_datetime_utc) <
+                self.time_column
+                ,
+                self.time_column <
+                sql.func.unix_timestamp(self.user_plot.end_datetime_utc)
             )
         # self.eng.echo = True
         self.dataframe = pd.read_sql(query.statement,
@@ -223,8 +223,8 @@ class Database(object):
         if self.column_data_source is None:
             self.column_data_source = ColumnDataSource(data=self.dataframe)
         else:
-            self.column_data_source.data = (
-                ColumnDataSource(data=self.dataframe).data)
+            self.column_data_source.data = \
+                self.column_data_source._data_from_df(self.dataframe)
 
     def set_ceil_data_source(self):
         logger.debug('setting up ceil data source %s', )
@@ -235,28 +235,35 @@ class Database(object):
         y = []
         dw = []
         dh = []
-        time_int = max(self.user_plot.data_average_secs,30)
+        time_int = max(self.user_plot.data_average_secs, 30)
 
         for i in range(ll):
             dd.append(data.iloc[i:i + 1, 1:].T.values)
             tt.append(
-                    # int(data.iloc[i, 0]) * 1000 - time_int * 1000 / 2
-                    data.iloc[i, 0].to_datetime() - datetime.timedelta(seconds=time_int / 2)
+                # int(data.iloc[i, 0]) * 1000 - time_int * 1000 / 2
+                data.iloc[i, 0].to_datetime() - datetime.timedelta(seconds=time_int / 2)
             )
             y.append(0)
             dw.append(time_int * 1000)
             dh.append(250 * 15)
 
-
         cs = ColumnDataSource(
-                data={
-                    'x':tt,
-                    'y':y,
-                    'dh':dh,
-                    'dw':dw,
-                    'image':dd
-                }
+            data={
+                'x': tt,
+                'y': y,
+                'dh': dh,
+                'dw': dw,
+                'image': dd
+            }
         )
+
+        ddata={
+            'x': tt,
+            'y': y,
+            'dh': dh,
+            'dw': dw,
+            'image': dd
+        }
 
         # length_data = len(self.dataframe)
         # data = dict(
@@ -274,10 +281,9 @@ class Database(object):
         # df['y'] = 0
 
         if self.column_data_source is None:
-            self.column_data_source = ColumnDataSource(data=cs.data)
+            self.column_data_source = ColumnDataSource(data=ddata)
         else:
-            self.column_data_source.data = cs.data
+            self.column_data_source.data = ddata
 
         self.dataframe.replace(np.nan, 'NaN', True)
         # logger.debug('max are %s', self.dataframe.max())
-
