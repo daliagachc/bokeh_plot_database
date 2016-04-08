@@ -241,9 +241,13 @@ class UserPlot(object):
     def update(self):
         # logger.debug('starting update %s', self.name)
         x_range_type = type(self.x_range.end)
+        logger.debug('xragne type is %s', x_range_type)
         if x_range_type is datetime.datetime:
-            x_start = self.x_range.start.replace(tzinfo=timezone.utc).timestamp() * 1000
-            x_end = self.x_range.end.replace(tzinfo=timezone.utc).timestamp() * 1000
+            logger.debug('timezone is %s', timezone)
+            # x_start = self.x_range.start.replace(tzinfo=timezone.utc).timestamp() * 1000
+            # x_end = self.x_range.end.replace(tzinfo=timezone.utc).timestamp() * 1000
+            x_start = (self.x_range.start.timestamp()) * 1000
+            x_end = (self.x_range.end.timestamp()) * 1000
 
         else:
             x_end = self.x_range.end
